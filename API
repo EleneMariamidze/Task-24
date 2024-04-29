@@ -1,0 +1,59 @@
+#myproject/myproject/settings.py
+AUTH_USER_MODEL = 'myapp.CustomUser'  
+
+#myproject/myapp/models.py
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+
+class CustomUser(AbstractUser):
+    custom_name = models.CharField(max_length=100)
+    custom_mail = models.CharField(max_length=100)
+    birth_date = models.DateField(null=True, blank=True)
+    
+    def __str__(self):
+        return self.username
+
+# myapp/serializers.py
+from rest_framework import serializers
+from .models import CustomUser
+
+class CustomUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ('id', 'username', 'custom_name', 'custom_mail', 'birth_date')
+        
+python manage.py makemigrations
+python manage.py migrate
+python manage.py createsuperuser
+
+# myapp/views.py
+from rest_framework import viewsets
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+from .models import CustomUser
+from .serializers import CustomUserSerializer
+
+class CustomUserViewSet(viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
+
+
+# user_management/urls.py
+from django.urls import path
+from myapp.views import CustomUserViewSet
+
+
+# myproject/urls.py
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from myapp.views import CustomUserViewSet
+
+
+router = DefaultRouter()
+router.register(r'users', CustomUserViewSet)
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/', include(router.urls)),
+]
